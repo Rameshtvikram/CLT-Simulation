@@ -1,42 +1,38 @@
-"""Central Limit Theorem demonstration.
-
-Sample means of non-normal distributions become approximately normal
-as the sample size n increases.
+"""
+Central Limit Theorem demo: skewed data -> bell-shaped sample means.
+Requires: numpy, seaborn, matplotlib
 """
 import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
-from scipy import stats
 
 rng = np.random.default_rng(42)
+sns.set_theme(style="whitegrid")
 
-N_SAMPLES = 10_000          # number of sample means drawn per plot
-SAMPLE_SIZES = [1, 5, 30, 100]
+# 1) CLT: means of samples drawn from a heavily skewed (exponential) distribution
+sample_sizes = [1, 2, 5, 30]
+n_trials = 10_000
 
-distributions = {
-    "Exponential": lambda size: rng.exponential(scale=2.0, size=size),
-    "Uniform": lambda size: rng.uniform(0, 10, size=size),
-    "Binomial": lambda size: rng.binomial(n=10, p=0.2, size=size),
-}
+fig, axes = plt.subplots(1, 4, figsize=(16, 3.8), sharey=False)
+for ax, n in zip(axes, sample_sizes):
+    means = rng.exponential(scale=1.0, size=(n_trials, n)).mean(axis=1)
+    sns.histplot(means, bins=50, kde=True, stat="density", ax=ax, color="#2b6cb0")
+    ax.set_title(f"Sample size n = {n}")
+    ax.set_xlabel("Sample mean")
+fig.suptitle("Averages of a skewed distribution become bell-shaped as n grows", y=1.05)
+plt.tight_layout()
+plt.savefig("clt_simulation.png", dpi=200, bbox_inches="tight")
+plt.close()
 
-fig, axes = plt.subplots(
-    len(distributions), len(SAMPLE_SIZES), figsize=(16, 9), constrained_layout=True
-)
+# 2) Transformation vs CLT: log transform makes skewed data approximately normal
+income_like = rng.lognormal(mean=10, sigma=0.9, size=50_000)
+fig, axes = plt.subplots(1, 2, figsize=(11, 3.8))
+sns.histplot(income_like, bins=80, ax=axes[0], color="#c05621")
+axes[0].set_title("Income-like data: right-skewed")
+sns.histplot(np.log(income_like), bins=80, ax=axes[1], color="#2f855a")
+axes[1].set_title("Log transform: skewed data -> approximately normal")
+plt.tight_layout()
+plt.savefig("not_everything_is_normal.png", dpi=200, bbox_inches="tight")
+plt.close()
 
-for row, (name, draw) in enumerate(distributions.items()):
-    for col, n in enumerate(SAMPLE_SIZES):
-        means = draw((N_SAMPLES, n)).mean(axis=1)
-        ax = axes[row, col]
-        ax.hist(means, bins=40, density=True, color="#4C72B0", alpha=0.75)
-
-        # Overlay the normal curve fitted to the sample means
-        mu, sigma = means.mean(), means.std()
-        x = np.linspace(means.min(), means.max(), 200)
-        ax.plot(x, stats.norm.pdf(x, mu, sigma), color="crimson", lw=2)
-
-        ax.set_title(f"{name} | n = {n}")
-        if col == 0:
-            ax.set_ylabel("Density")
-
-fig.suptitle("Central Limit Theorem: distribution of sample means", fontsize=16)
-plt.savefig("clt_demo.png", dpi=150)
-plt.show()
+print("Saved: clt_simulation.png, not_everything_is_normal.png")
