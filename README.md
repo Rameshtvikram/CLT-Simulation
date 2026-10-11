@@ -15,7 +15,7 @@ The Central Limit Theorem (CLT) says that the distribution of sample means appro
 
 ## Results
 
-![CLT animation](animation.gif)
+![CLT animation](clt_animation.gif)
 
 At `n = 1` the shape is the original skewed distribution. By `n = 30` the sample means are close to a bell curve.
 
